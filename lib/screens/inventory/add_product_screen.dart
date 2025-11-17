@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/db_service.dart';
 
 // Pantalla para añadir un producto nuevo
 class AddProductScreen extends StatefulWidget {
@@ -64,9 +65,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
             // Boton guardar
             Center(
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   // se guarda el producto
-                  Navigator.pop(context);
+                  final name = _nameController.text;
+                  final qty = int.tryParse(_quantityController.text) ?? 0;
+                  final price = double.tryParse(_priceController.text) ?? 0.0;
+
+                  await DatabaseService.instance.addProduct(name, qty, price);
+
+                  if (context.mounted) Navigator.pop(context); // volver al inventario
                 },
                 child: const Text('Save Product'),
               ),

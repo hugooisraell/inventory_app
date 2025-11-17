@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../services/db_service.dart';
 
 // Pantalla para editar un producto existente
 class EditProductScreen extends StatefulWidget {
+  final int id;
   final String name;
   final int quantity;
   final double price;
@@ -9,6 +11,7 @@ class EditProductScreen extends StatefulWidget {
   // Constructor recibiendo datos actuales del producto
   const EditProductScreen({
     super.key,
+    required this.id,
     required this.name,
     required this.quantity,
     required this.price,
@@ -77,9 +80,20 @@ class _EditProductScreenState extends State<EditProductScreen> {
             // Boton guardar
             Center(
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   // se guardalos cambios
-                  Navigator.pop(context);
+                  final name = _nameController.text;
+                  final qty = int.tryParse(_quantityController.text) ?? 0;
+                  final price = double.tryParse(_priceController.text) ?? 0.0;
+
+                  await DatabaseService.instance.updateProduct(
+                    widget.id,
+                    name,
+                    qty,
+                    price,
+                  );
+
+                  if (context.mounted) Navigator.pop(context);
                 },
                 child: const Text('Save Changes'),
               ),
