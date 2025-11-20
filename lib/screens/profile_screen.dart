@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // Pantalla de Perfil de usuario
 class ProfileScreen extends StatefulWidget {
@@ -9,6 +10,20 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  // Funcion para cerrar sesion
+  Future<void> _logOut() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('userId');
+    prefs.remove('userName');
+    prefs.remove('userEmail');
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Session successfully closed')),
+    );
+    Navigator.pushReplacementNamed(context, '/login');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -67,10 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   vertical: 12,
                 ),
               ),
-              onPressed: () {
-                // Navega al Login
-                Navigator.pushReplacementNamed(context, '/login');
-              },
+              onPressed: _logOut,
               child: const Text('Log Out'),
             ),
 
