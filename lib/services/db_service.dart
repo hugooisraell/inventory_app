@@ -114,7 +114,12 @@ class DatabaseService {
   // CRUD de Usuario
 
   // Registro
-  Future<int> registerUser(String fstName, String lstName, String email, String pass) async {
+  Future<int> registerUser(
+    String fstName,
+    String lstName,
+    String email,
+    String pass,
+  ) async {
     final db = await database;
     return await db.insert('users', {
       'first_name': fstName,
@@ -138,5 +143,16 @@ class DatabaseService {
     } else {
       return null;
     }
+  }
+
+  // Comprueba si el email ya esta registrado
+  Future<bool> emailExists(String email) async {
+    final db = await database;
+    final result = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    return result.isNotEmpty;
   }
 }

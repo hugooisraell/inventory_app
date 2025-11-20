@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../services/db_service.dart';
 
 // Pantalla de registro
 class SignupScreen extends StatefulWidget {
@@ -9,9 +11,77 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _nameController = TextEditingController();
+  final _fstNameController = TextEditingController();
+  final _lstNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  // controla la animación y el estado visual del botón
+  bool _loading = false;
+
+  // Guarda la sesion del nuevo usuario
+  Future<void> _saveSession(int userId, String name, String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('userId', userId);
+    await prefs.setString('userName', name);
+    await prefs.setString('userEmail', email);
+  }
+
+  // Registra usuario nuevo
+  Future<void> _register() async {
+    final fstName = _fstNameController.text.trim();
+    final lstName = _lstNameController.text.trim();
+    final email = _emailController.text.trim();
+    final pass = _passwordController.text;
+
+    // Verifica los campos
+    if (fstName.isEmpty || lstName.isEmpty || email.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields.')),
+      );
+      return;
+    }
+
+    // desactiva boton, cambia animacion
+    setState(() => _loading = true);
+
+    // Comprobar si ya esta registrado
+    final exists = await DatabaseService.instance.emailExists(email);
+
+    if (exists) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User already exists')),
+        
+      );
+
+      // activa boton, cambia animacion
+      setState(() => _loading = false);
+      
+      return;
+    }
+
+    // Registrar usuario en SQLite (devuelve el id insertado)
+    final insertedId = await DatabaseService.instance.registerUser(fstName, lstName, email, pass);
+
+    // activa boton, cambia animacion
+    setState(() => _loading = false);
+
+    if (insertedId > 0) {
+      // Guardar sesion y navegar al home (auto-login)
+      await _saveSession(insertedId, fstName, email);
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/home');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User successfully registered')),
+      );
+    } else {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Error registering user')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +104,20 @@ class _SignupScreenState extends State<SignupScreen> {
 
               // Campo nombre
               TextField(
-                controller: _nameController,
+                controller: _fstNameController,
                 decoration: const InputDecoration(
-                  labelText: 'Full Name',
+                  labelText: 'First Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Campo apellido
+              TextField(
+                controller: _lstNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -68,11 +149,8 @@ class _SignupScreenState extends State<SignupScreen> {
 
               // Botón registrar
               ElevatedButton(
-                onPressed: () {
-                  // Momentaneamente vuelve al login
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
-                child: const Text('Sign Up'),
+                onPressed: _loading ? null : _register,
+                child: _loading ? const CircularProgressIndicator(color: Colors.white) : const Text('Sign Up'),
               ),
 
               const SizedBox(height: 20),
