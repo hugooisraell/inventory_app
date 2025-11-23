@@ -155,4 +155,20 @@ class DatabaseService {
     );
     return result.isNotEmpty;
   }
+
+  // Actualizar usuario
+  Future<int> updateUser(
+    int id,
+    String fstName,
+    String lstName,
+    String email,
+  ) async {
+    final db = await database;
+    return await db.update(
+      'users',
+      {'first_name': fstName, 'last_name': lstName, 'email': email},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }

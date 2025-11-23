@@ -20,10 +20,11 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _loading = false;
 
   // Guarda la sesion del nuevo usuario
-  Future<void> _saveSession(int userId, String name, String email) async {
+  Future<void> _saveSession(int userId, String fstName, String lstName, String email) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('userId', userId);
-    await prefs.setString('userName', name);
+    await prefs.setString('userFstName', fstName);
+    await prefs.setString('userLstName', lstName);
     await prefs.setString('userEmail', email);
   }
 
@@ -69,7 +70,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     if (insertedId > 0) {
       // Guardar sesion y navegar al home (auto-login)
-      await _saveSession(insertedId, fstName, email);
+      await _saveSession(insertedId, fstName, lstName, email);
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/home');
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'edit_profile_screen.dart';
 
 // Pantalla de Perfil de usuario
 class ProfileScreen extends StatefulWidget {
@@ -10,12 +11,34 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String? userFstName;
+  String? userLstName;
+  String? userEmail;
+
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSession();
+  }
+
+  // Cargar datos de la sesion actual
+  Future<void> _loadSession() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    setState(() {
+      userFstName = prefs.getString('userFstName');
+      userLstName = prefs.getString('userLstName');
+      userEmail = prefs.getString('userEmail');
+      isLoading = false;
+    });
+  }
+
   // Funcion para cerrar sesion
   Future<void> _logOut() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('userId');
-    prefs.remove('userName');
-    prefs.remove('userEmail');
+    await prefs.clear(); // Limpia toda la sesión
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -26,6 +49,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Mostrar spinner mientras carga la sesión
+    if (isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    // Nombre limpio
+    final String displayName =
+        "${userFstName ?? ''} ${userLstName ?? ''}".trim().isEmpty
+        ? "User"
+        : "${userFstName ?? ''} ${userLstName ?? ''}".trim();
+
+    // Icono de usuario
+    final String iconUser =
+        "${userFstName ?? ''} ${userLstName ?? ''}".trim().isEmpty
+        ? "U"
+        : "${userFstName![0].toUpperCase()} ${userLstName![0].toUpperCase()}"
+              .trim();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
 
@@ -36,27 +77,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const SizedBox(height: 20),
 
             // Avatar circular
-            const CircleAvatar(
+            CircleAvatar(
               radius: 50,
               backgroundColor: Colors.indigo,
-              child: Icon(Icons.person, size: 60, color: Colors.white),
+              child: Text(
+                iconUser,
+                style: const TextStyle(fontSize: 50, color: Colors.white),
+              ),
             ),
 
             const SizedBox(height: 20),
 
-            // Nombre del usuario
-            const Text(
-              'Nombre del Usuario',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            // Nombre completo
+            Text(
+              displayName,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 5),
 
             // Email del usuario
-            const Text(
-              'usuario@ejemplo.com',
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
+            if (userEmail != null && userEmail!.trim().isNotEmpty)
+              Text(
+                userEmail!,
+                style: const TextStyle(fontSize: 16, color: Colors.grey),
+              ),
 
             const SizedBox(height: 30),
 
@@ -65,8 +110,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Opciones del perfil
             ListTile(
               leading: const Icon(Icons.edit),
-              title: const Text('Editar perfil'),
-              onTap: () {},
+              title: const Text('Edit profile'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EditProfileScreen(),
+                  ),
+                ).then((value) {
+                  // cuando regresa de editar, recargar sesión
+                  _loadSession();
+                });
+              },
             ),
 
             const Divider(),

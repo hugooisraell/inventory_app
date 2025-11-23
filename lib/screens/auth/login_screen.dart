@@ -21,7 +21,8 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _saveSession(Map<String, dynamic> user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt('userId', user['id'] as int);
-    await prefs.setString('userName', user['first_name'] as String);
+    await prefs.setString('userFstName', user['first_name'] as String);
+    await prefs.setString('userLstName', user['last_name'] as String);
     await prefs.setString('userEmail', user['email'] as String);
   }
 
