@@ -91,6 +91,13 @@ class DatabaseService {
     return await db.delete('products', where: 'id = ?', whereArgs: [id]);
   }
 
+  // Obtener producto por ID
+  Future<Map<String, dynamic>> getProductById(int id) async {
+    final db = await database;
+    final result = await db.query('products', where: 'id = ?', whereArgs: [id]);
+    return result.first;
+  }
+
   // CRUD de ventas
 
   // Registrar venta

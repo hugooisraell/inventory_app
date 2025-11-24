@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/db_service.dart';
+import '../services/notification_service.dart';
 
 // Pantalla de Ventas
 class SalesScreen extends StatefulWidget {
@@ -104,6 +105,20 @@ class _SalesScreenState extends State<SalesScreen> {
         _selectedProductId!,
         qty,
       );
+
+      // Después de bajar stock, validar inventario actual
+      final updatedProduct = await DatabaseService.instance.getProductById(
+        _selectedProductId!,
+      );
+      final newQty = updatedProduct['quantity'];
+
+      // Si el stock es bajo, notificar
+      if (newQty < 10) {
+        NotificationService().showLowStockNotification(
+          updatedProduct['name'],
+          newQty,
+        );
+      }
 
       if (rows <= 0) {
         // Intent de rollback o aviso: si decreaseStock falló

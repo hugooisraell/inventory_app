@@ -8,10 +8,14 @@ import 'screens/sales_screen.dart';
 import 'screens/reports_screen.dart';
 import 'screens/map_screen.dart';
 import 'screens/profile_screen.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   // Asegura que el binding de Flutter esté listo antes de usar APIs nativas/async
   WidgetsFlutterBinding.ensureInitialized();
+
+  await NotificationService().initNotifications();
+  
   // Obtenemos SharedPreferences de forma síncrona antes de runApp
   final prefs = await SharedPreferences.getInstance();
   // Determinamos si hay sesión activa
