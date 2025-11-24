@@ -105,10 +105,73 @@ class DatabaseService {
     });
   }
 
-  // Obtener todas las ventas
+  // Reducir stock después de una venta
+  Future<int> decreaseStock(int productId, int qty) async {
+    final db = await database;
+
+    // Obtener producto actual
+    final result = await db.query(
+      'products',
+      where: 'id = ?',
+      whereArgs: [productId],
+    );
+
+    if (result.isEmpty) return 0;
+
+    final currentQty = (result.first['quantity'] as int?) ?? 0;
+
+    final newQty = currentQty - qty;
+
+    return await db.update(
+      'products',
+      {'quantity': newQty},
+      where: 'id = ?',
+      whereArgs: [productId],
+    );
+  }
+
+  // Obtener todas las ventas con información del producto
   Future<List<Map<String, dynamic>>> getSales() async {
     final db = await database;
-    return await db.query('sales');
+
+    final result = await db.rawQuery('''
+    SELECT s.id, s.quantity, s.total, s.date,
+           p.name AS product_name,
+           p.price AS product_price
+    FROM sales s
+    INNER JOIN products p ON p.id = s.product_id
+    ORDER BY s.id DESC
+  ''');
+
+    return result;
+  }
+
+  // Total vendido
+  Future<double> getTotalSales() async {
+    final db = await database;
+    final res = await db.rawQuery("SELECT SUM(total) as total FROM sales");
+    return (res.first['total'] as double?) ?? 0.0;
+  }
+
+  // Ventas del día
+  Future<double> getTodaySales() async {
+    final db = await database;
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+
+    final res = await db.rawQuery('''
+    SELECT SUM(total) as total
+    FROM sales
+    WHERE date LIKE '$today%'
+  ''');
+
+    return (res.first['total'] as double?) ?? 0.0;
+  }
+
+  // Número total de ventas
+  Future<int> getSalesCount() async {
+    final db = await database;
+    final res = await db.rawQuery("SELECT COUNT(*) as total FROM sales");
+    return res.first['total'] as int;
   }
 
   // CRUD de Usuario
